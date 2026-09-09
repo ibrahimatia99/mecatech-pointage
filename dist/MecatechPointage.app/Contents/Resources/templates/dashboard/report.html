@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<style>
+  :root {
+    --bg: #f4f5f9;
+    --card-bg: #ffffff;
+    --text-main: #1e1b2e;
+    --text-muted: #8e8ba7;
+    --primary: {{ cfg.primary_color }};
+    --primary-light: {{ cfg.primary_color }}22;
+    --border: #e9e8f4;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text-main);
+    height: 100%;
+    overflow-y: auto !important;
+  }
+
+  body { padding: 30px; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .report-container { max-width: 900px; width: 100%; margin: 0 auto; padding-bottom: 50px; }
+  
+  .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 25px; }
+  
+  .summary-grid { display: flex; gap: 15px; margin-bottom: 25px; }
+  .summary-box { flex: 1; background: var(--card-bg); border: 1px solid var(--border); padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+  
+  .days-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+  .daily-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; background: var(--card-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+  
+  .status-tag { padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 700; }
+  .status-tag.IN { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .status-tag.OUT { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+  .filter-bar { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 25px; background: var(--card-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border); }
+  input[type="date"] { width: 100%; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text-main); font-size: 13px; outline: none; }
+
+  .no-print { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+  .btn { padding: 10px 20px; border: none; border-radius: 50px; background: var(--primary); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+
+  /* FULL A4 EDGE-TO-EDGE PRINT STYLES */
+  @page {
+    size: A4 portrait;
+    margin: 4mm;
+  }
+
+  @media print {
+    html, body {
+      background: #ffffff !important;
+      color: #000000 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    .no-print, .filter-bar { display: none !important; }
+
+    .report-container {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .days-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 6mm !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .daily-card {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      border: 1px solid #9ca3af !important;
+      border-radius: 6px !important;
+      padding: 8px 12px !important;
+      background: #ffffff !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
+      box-shadow: none !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block layout %}
+<div class="report-container">
+  <div class="no-print">
+    <a href="/" class="btn" style="background: var(--border); color: var(--text-main);">
+      <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+    </a>
+    <button class="btn" onclick="window.print()">
+      <i class="fa-solid fa-print"></i> Print Official Report
+    </button>
+  </div>
+
+  <div class="filter-bar">
+    <div style="flex:1;">
+      <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">FROM DATE</label>
+      <input type="date" id="history-start-date">
+    </div>
+    <div style="flex:1;">
+      <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">TO DATE</label>
+      <input type="date" id="history-end-date">
+    </div>
+    <button class="btn" onclick="loadReportData()" style="padding: 9px 18px; font-size: 13px;">
+      <i class="fa-solid fa-filter"></i> Filter
+    </button>
+    <button class="btn" onclick="resetDateFilter()" style="padding: 9px 14px; font-size: 13px; background: var(--border); color: var(--text-main);">
+      Reset
+    </button>
+  </div>
+
+  <div class="header-flex">
+    <div>
+      <h1 id="r-worker-name" style="font-size: 24px; margin-bottom: 4px;">Loading...</h1>
+      <p id="r-worker-id" style="font-size: 14px; color: var(--text-muted);"></p>
+    </div>
+    <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+      <div>
+        <h3 style="font-size: 18px; color: var(--primary); margin: 0;">{{ cfg.app_name }}</h3>
+        <span style="font-size: 12px; color: var(--text-muted);">Attendance Report</span>
+      </div>
+      {% if cfg.app_logo %}
+        <img src="{{ cfg.app_logo }}" alt="Logo" style="width: 36px; height: 36px; border-radius: 8px; object-fit: contain;">
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-box">
+      <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block;">THIS WEEK</span>
+      <strong id="r-week-total" style="font-size: 18px; color: var(--primary);">0h 0m</strong>
+    </div>
+    <div class="summary-box">
+      <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block;">THIS MONTH</span>
+      <strong id="r-month-total" style="font-size: 18px; color: var(--primary);">0h 0m</strong>
+    </div>
+    <div class="summary-box">
+      <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block;">SELECTED RANGE</span>
+      <strong id="r-range-total" style="font-size: 18px; color: var(--primary);">0h 0m</strong>
+    </div>
+  </div>
+
+  <div id="r-days-container" class="days-grid"></div>
+</div>
+
+<script>
+  const workerId = "{{ worker_id }}";
+
+  function loadReportData() {
+    const start = document.getElementById('history-start-date').value;
+    const end = document.getElementById('history-end-date').value;
+
+    let url = `/api/worker/history/${workerId}?`;
+    if (start) url += `start_date=${start}&`;
+    if (end) url += `end_date=${end}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.worker) return;
+        document.getElementById('r-worker-name').innerText = data.worker.name;
+        document.getElementById('r-worker-id').innerText = `CIN: ${data.worker.cin || '-'} | Phone: ${data.worker.phone || '-'}`;
+        
+        document.getElementById('r-week-total').innerText = data.week_total;
+        document.getElementById('r-month-total').innerText = data.month_total;
+        document.getElementById('r-range-total').innerText = data.range_total;
+
+        const container = document.getElementById('r-days-container');
+        container.innerHTML = '';
+
+        if (!data.days || data.days.length === 0) {
+          container.innerHTML = '<p style="color:var(--text-muted);">No activity logged for this date range.</p>';
+        } else {
+          data.days.forEach(day => {
+            let rowsHtml = '';
+            day.logs.forEach(l => {
+              const icon = l.action === 'IN' ? '<i class="fa-solid fa-arrow-right-to-bracket"></i>' : '<i class="fa-solid fa-arrow-right-from-bracket"></i>';
+              rowsHtml += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed var(--border);">
+                  <span class="status-tag ${l.action}">${icon} ${l.action}</span>
+                  <span style="font-size:13px; font-weight:600;">${l.timestamp.split(' ')[1]}</span>
+                </div>`;
+            });
+
+            container.innerHTML += `
+              <div class="daily-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                  <strong style="font-size:13px;"><i class="fa-regular fa-calendar-days"></i> ${day.date}</strong>
+                  <span style="font-size:11px; font-weight:700; color:var(--primary); background:var(--primary-light); padding:3px 8px; border-radius:50px;">Total: ${day.total_time}</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  ${rowsHtml}
+                </div>
+              </div>`;
+          });
+        }
+      });
+  }
+
+  function resetDateFilter() {
+    document.getElementById('history-start-date').value = '';
+    document.getElementById('history-end-date').value = '';
+    loadReportData();
+  }
+
+  loadReportData();
+</script>
+{% endblock %}
