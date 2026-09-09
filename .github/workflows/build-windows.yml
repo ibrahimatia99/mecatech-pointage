@@ -11,10 +11,10 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
 
@@ -29,7 +29,7 @@ jobs:
         pyinstaller --name "MecatechPointage" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --hidden-import="zeroconf" --hidden-import="tkinter" --noconsole app.py
 
     - name: Upload Windows Executable
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: MecatechPointage-Windows
         path: dist/MecatechPointage/
