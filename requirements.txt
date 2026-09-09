@@ -1,4 +1,6 @@
-Flask
-zeroconf
-Werkzeug
-pywebview
+Flask>=3.0.0
+Werkzeug>=3.0.0
+pywebview>=4.0.0
+Pillow>=10.0.0
+pyserial>=3.5
+pyinstaller>=6.0.0
