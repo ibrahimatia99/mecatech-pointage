@@ -3,6 +3,8 @@ import sys
 import socket
 import atexit
 import multiprocessing
+import threading
+import webview
 from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
 from zeroconf import ServiceInfo, Zeroconf
 from db import load_config, get_default_db_dir
@@ -10,7 +12,6 @@ from routes.api import api_bp
 from routes.auth import auth_bp
 from routes.settings import settings_bp
 
-# 1. Windows PyInstaller Path Resolution
 if getattr(sys, 'frozen', False):
     base_dir = sys._MEIPASS
 else:
@@ -22,7 +23,6 @@ app = Flask(__name__,
             
 app.secret_key = 'mecatech_secret_key'
 
-# 2. Persistent Uploads Configuration
 persistent_data_dir = load_config().get("db_path", get_default_db_dir())
 UPLOAD_FOLDER = os.path.join(persistent_data_dir, 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -32,14 +32,12 @@ app.register_blueprint(api_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(settings_bp, url_prefix='/api/settings')
 
-# 3. Intercept Static Uploads Route
 @app.route('/static/uploads/<filename>')
 def serve_uploads(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.before_request
 def require_login():
-    """Restricts access to app routes if not authenticated."""
     allowed_routes = ['auth.login', 'static', 'api.heartbeat', 'api.api_scan', 'serve_uploads']
     if not session.get('logged_in') and request.endpoint not in allowed_routes:
         return redirect(url_for('auth.login'))
@@ -72,7 +70,6 @@ def register_mdns():
         zeroconf = Zeroconf()
         zeroconf.register_service(info)
         atexit.register(zeroconf.close)
-        print(f"✅ mDNS Service Advertised: {local_ip}:5001 (_mecatech._tcp)")
     except Exception as e:
         print(f"⚠️ mDNS registration warning: {e}")
 
@@ -81,9 +78,21 @@ def index():
     cfg = load_config()
     return render_template('dashboard/index.html', cfg=cfg)
 
+def run_flask():
+    app.run(debug=False, host='127.0.0.1', port=5001, use_reloader=False)
+
 if __name__ == '__main__':
-    # 4. Mandatory for Windows Executables
     multiprocessing.freeze_support()
     register_mdns()
-    # 5. Disable Debug Reloader
-    app.run(debug=False, host='0.0.0.0', port=5001)
+    
+    # Start Flask server in a separate background thread
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
+    
+    # Open native desktop application window
+    cfg = load_config()
+    window_title = cfg.get("app_name", "Mecatech Pointage")
+    
+    webview.create_window(window_title, 'http://127.0.0.1:5001', width=1280, height=768)
+    webview.start()

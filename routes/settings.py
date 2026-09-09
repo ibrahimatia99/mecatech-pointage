@@ -1,6 +1,4 @@
 import os
-import sys
-import subprocess
 import platform
 from flask import Blueprint, request, jsonify, current_app, url_for
 from werkzeug.utils import secure_filename
@@ -13,44 +11,39 @@ def choose_directory():
     try:
         selected_dir = ""
 
-        if platform.system() == "Darwin":
-            cmd = 'osascript -e "POSIX path of (choose folder with prompt \\"Select Database Storage Directory\\")"'
-            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, _ = process.communicate()
-            selected_dir = stdout.decode('utf-8').strip()
+        # Use pywebview native file dialog window dialog if running inside desktop app
+        try:
+            import webview
+            # active_window() targets the current pywebview desktop container securely
+            window = webview.active_window()
+            if window:
+                result = window.create_file_dialog(
+                    webview.FOLDER_DIALOG, 
+                    title="Select Database Storage Directory"
+                )
+                if result and isinstance(result, tuple) and len(result) > 0:
+                    selected_dir = result[0]
+                elif result and isinstance(result, str):
+                    selected_dir = result
+        except Exception:
+            pass
 
-        elif platform.system() == "Windows":
-            python_script = (
-                "import tkinter as tk; "
-                "from tkinter import filedialog; "
-                "root = tk.Tk(); "
-                "root.withdraw(); "
-                "root.attributes('-topmost', True); "
-                "path = filedialog.askdirectory(title='Select Database Storage Directory'); "
-                "print(path); "
-                "root.destroy()"
-            )
-            process = subprocess.Popen(
-                [sys.executable, "-c", python_script],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            stdout, _ = process.communicate()
-            selected_dir = stdout.strip()
-
-        else:
-            python_script = (
-                "import tkinter as tk; "
-                "from tkinter import filedialog; "
-                "root = tk.Tk(); "
-                "root.withdraw(); "
-                "path = filedialog.askdirectory(); "
-                "print(path)"
-            )
-            process = subprocess.Popen([sys.executable, "-c", python_script], stdout=subprocess.PIPE, text=True)
-            stdout, _ = process.communicate()
-            selected_dir = stdout.strip()
+        # Fallback for standard browser testing or if webview context is missing
+        if not selected_dir:
+            if platform.system() == "Windows":
+                import tkinter as tk
+                from tkinter import filedialog
+                root = tk.Tk()
+                root.withdraw()
+                root.attributes('-topmost', True)
+                selected_dir = filedialog.askdirectory(title='Select Database Storage Directory')
+                root.destroy()
+            elif platform.system() == "Darwin":
+                import subprocess
+                cmd = 'osascript -e "POSIX path of (choose folder with prompt \\"Select Database Storage Directory\\")"'
+                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout, _ = process.communicate()
+                selected_dir = stdout.decode('utf-8').strip()
 
         if selected_dir and os.path.exists(selected_dir):
             return jsonify({"status": "success", "path": selected_dir}), 200
