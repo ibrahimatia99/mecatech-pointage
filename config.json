@@ -1,7 +1,7 @@
 {
     "db_path": "/Users/macbook/Desktop/mecatech pointage/",
     "app_name": "Mecatech Pointage",
-    "app_logo": "/static/uploads/logo_icon.png",
+    "app_logo": "/static/uploads/logo_logo.png",
     "app_icon": "/static/uploads/icon_icon.png",
     "app_password": "admin",
     "theme": "light",
