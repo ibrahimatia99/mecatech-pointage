@@ -1,0 +1,14 @@
+<div class="section-card">
+  <div class="section-heading-row"><div><h3><span class="offline-icon" data-icon="calendar-check" aria-hidden="true"></span> <span data-i18n="leave">Leave Management</span></h3><p class="section-subtitle">Record authorized absences so they are not counted as ordinary absences.</p></div></div>
+  <div class="form-grid leave-form-grid">
+    <select id="leave-worker-select"></select>
+    <select id="leave-type"><option>Vacation</option><option>Sick Leave</option><option>Authorized Absence</option><option>Mission</option></select>
+    <input type="date" id="leave-start">
+    <input type="date" id="leave-end">
+    <input type="text" id="leave-note" data-i18n-placeholder="leave_note" placeholder="Note">
+  </div>
+  <button class="btn" onclick="addLeave()"><span class="offline-icon" data-icon="plus" aria-hidden="true"></span> <span data-i18n="add_leave">Add Leave</span></button>
+</div>
+<div class="section-card">
+  <div class="table-responsive"><table><thead><tr><th data-i18n="employees">Employee</th><th data-i18n="leave_type">Type</th><th data-i18n="leave_start">Start</th><th data-i18n="leave_end">End</th><th data-i18n="leave_note">Note</th><th data-i18n="actions">Actions</th></tr></thead><tbody id="leave-table-body"></tbody></table></div>
+</div>
