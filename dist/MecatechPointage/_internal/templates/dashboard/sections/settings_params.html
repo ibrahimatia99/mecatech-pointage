@@ -1,0 +1,25 @@
+<div class="section-card" style="margin-bottom:0;">
+  <h3><i class="fa-solid fa-gears"></i> App Parameters</h3>
+
+  <div style="display:flex; flex-direction:column; gap:18px;">
+    <div>
+      <label style="font-size:12px; font-weight:700; color:var(--text-muted);"><i class="fa-solid fa-database"></i> DATABASE STORAGE DIRECTORY</label>
+      <div style="display:flex; gap:10px; align-items:center; margin-top:6px;">
+        <input type="text" id="db_path_input" name="db_path" value="{{ cfg.db_path }}" readonly style="flex:1; background:var(--bg);">
+        <button type="button" class="btn" onclick="selectDatabaseDirectory()" style="background:var(--card-bg); border:1.5px solid var(--border); color:var(--text-main); white-space:nowrap;">
+          <i class="fa-solid fa-folder-open"></i> Choose Directory
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <label style="font-size:12px; font-weight:700; color:var(--text-muted);"><i class="fa-solid fa-key"></i> APP PASSWORD</label>
+      <input type="password" name="app_password" value="{{ cfg.app_password }}">
+    </div>
+
+    <div>
+      <label style="font-size:12px; font-weight:700; color:var(--text-muted);"><i class="fa-solid fa-clock-rotate-left"></i> AUTO-PURGE HISTORY (DAYS)</label>
+      <input type="number" name="purge_days" value="{{ cfg.purge_days }}" placeholder="Set 0 to disable">
+    </div>
+  </div>
+</div>

@@ -1,0 +1,624 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<style>
+  :root {
+    --bg: #f4f5f9; 
+    --card-bg: #ffffff; 
+    --text-main: #1e1b2e; 
+    --text-muted: #8e8ba7;
+    --primary: {{ cfg.primary_color }}; 
+    --primary-hover: {{ cfg.primary_color }}dd;
+    --primary-light: {{ cfg.primary_color }}22; 
+    --border: #e9e8f4;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0f0d1a; 
+    --card-bg: #181528; 
+    --text-main: #f4f5f9; 
+    --text-muted: #8e8ba7;
+    --primary: {{ cfg.primary_color }}; 
+    --primary-hover: {{ cfg.primary_color }}dd;
+    --primary-light: {{ cfg.primary_color }}33; 
+    --border: #28243d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+  body { background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+  .sidebar { width: 260px; background: var(--card-bg); padding: 30px 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; }
+  .brand { font-size: 18px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+  .brand img { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; }
+
+  .nav-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .nav-btn { background: transparent; border: none; color: var(--text-muted); padding: 14px 18px; width: 100%; text-align: left; font-size: 15px; font-weight: 600; border-radius: 50px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 12px; }
+  .nav-btn.active, .nav-btn:hover { background: var(--primary); color: #ffffff; box-shadow: 0 6px 16px rgba(112, 0, 255, 0.2); }
+  .bottom-nav { border-top: 1px solid var(--border); padding-top: 15px; display: flex; flex-direction: column; gap: 8px; }
+  .content { flex: 1; padding: 35px 40px; overflow-y: auto; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
+  .status-badge { padding: 8px 18px; border-radius: 50px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+  .online { background: #e6f7f0; color: #059669; }
+  .offline { background: #fde8e8; color: #dc2626; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .online .dot { background: #059669; }
+  .offline .dot { background: #dc2626; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+  .worker-card { background: var(--card-bg); padding: 24px; border-radius: 20px; border: 2px solid var(--border); cursor: pointer; transition: transform 0.1s ease; }
+  .worker-card:hover { transform: translateY(-2px); }
+  .worker-card.card-in { background: #f0fdf4 !important; border-color: #86efac !important; }
+  .worker-card.card-out { background: #fef2f2 !important; border-color: #fca5a5 !important; }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 16px; }
+  .card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border); }
+  .status-tag { padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 700; }
+  .status-tag.IN { background: #e6f7f0; color: #059669; }
+  .status-tag.OUT { background: #fde8e8; color: #dc2626; }
+  .section-card { background: var(--card-bg); padding: 28px; border-radius: 24px; border: 1px solid var(--border); margin-bottom: 25px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+  input, select { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text-main); font-size: 14px; outline: none; }
+  .theme-switcher { display: flex; background: var(--bg); padding: 4px; border-radius: 50px; border: 1.5px solid var(--border); margin-bottom: 25px; }
+  .theme-btn { flex: 1; padding: 10px; border: none; border-radius: 50px; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .theme-btn.active { background: var(--card-bg); color: var(--primary); }
+
+  .preview-box { 
+    width: 60px !important; 
+    height: 60px !important; 
+    min-width: 60px !important;
+    border-radius: 12px; 
+    border: 1.5px dashed var(--border); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    overflow: hidden; 
+    background: var(--bg); 
+  }
+  
+  .preview-box img { 
+    max-width: 100% !important; 
+    max-height: 100% !important; 
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important; 
+  }
+
+  .color-picker-wrapper { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    width: 100%;
+  }
+
+  .color-picker-wrapper input[type="color"] { 
+    width: 60px !important; 
+    height: 42px !important; 
+    padding: 2px !important; 
+    border-radius: 10px; 
+    cursor: pointer; 
+  }
+
+  .color-picker-wrapper input[type="text"] { flex: 1; }
+  .btn { padding: 12px 24px; border: none; border-radius: 50px; background: var(--primary); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { padding: 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  .modal { display: none; position: fixed; inset: 0; background: rgba(30, 27, 46, 0.4); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 100; }
+  .modal-content { background: var(--card-bg); padding: 35px; border-radius: 24px; width: 450px; max-width: 90vw; border: 1px solid var(--border); }
+</style>
+{% endblock %}
+
+{% block layout %}
+  <div class="sidebar">
+    <div>
+      <div class="brand">
+        {% if cfg.app_logo %}<img src="{{ cfg.app_logo }}" alt="Logo">{% else %}<i class="fa-solid fa-bolt"></i>{% endif %}
+        <span>{{ cfg.app_name }}</span>
+      </div>
+      <ul class="nav-list">
+        <li><button class="nav-btn active" onclick="showTab('dashboard', event)"><i class="fa-solid fa-chart-pie"></i> Dashboard</button></li>
+        <li><button class="nav-btn" onclick="showTab('workers', event)"><i class="fa-solid fa-users"></i> Workers</button></li>
+      </ul>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-btn" onclick="showTab('settings', event)"><i class="fa-solid fa-gear"></i> Settings</button>
+      <a href="{{ url_for('auth.logout') }}" style="color:#ef4444; font-size:14px; font-weight:600; text-decoration:none; padding:12px 18px; display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="top-bar">
+      <h1 id="tab-title">Dashboard</h1>
+      <div id="esp-status" class="status-badge offline">
+        <span class="dot"></span> <span id="esp-text">TERMINAL DISCONNECTED</span>
+      </div>
+    </div>
+
+    <div id="tab-dashboard">{% include 'dashboard/sections/dashboard.html' %}</div>
+    <div id="tab-workers" style="display:none;">{% include 'dashboard/sections/workers.html' %}</div>
+    
+    <div id="tab-settings" style="display:none;">
+      <form id="settings-form" style="display:flex; flex-direction:column; gap:25px; width:100%;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; width: 100%;">
+          {% include 'dashboard/sections/settings_look.html' %}
+          {% include 'dashboard/sections/settings_params.html' %}
+          {% include 'dashboard/sections/settings_joker.html' %}
+        </div>
+        <button type="button" class="btn" onclick="saveSettings()" style="align-self:flex-start; padding:14px 32px; font-size:15px; margin-top:10px;">
+          <i class="fa-solid fa-floppy-disk"></i> Save All Customization
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- EDIT WORKER MODAL -->
+  <div id="edit-worker-modal" class="modal">
+    <div class="modal-content">
+      <h2 style="margin-bottom: 20px; font-size: 20px;">Edit Worker</h2>
+      <input type="hidden" id="edit-w-id">
+      <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+        <div>
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">WORKER NAME</label>
+          <input type="text" id="edit-w-name">
+        </div>
+        <div>
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">CIN NUMBER</label>
+          <input type="text" id="edit-w-cin">
+        </div>
+        <div>
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">PHONE NUMBER</label>
+          <input type="text" id="edit-w-phone">
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn" onclick="submitEditWorker()" style="flex:1; justify-content: center;">Save Changes</button>
+        <button class="btn" onclick="closeEditModal()" style="background: var(--border); color: var(--text-main); justify-content: center;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKER CARD ENROLLMENT MODAL -->
+  <div id="enrollModal" class="modal">
+      <div class="modal-content" style="text-align:center;">
+          <h3 style="margin-bottom:15px; font-size:20px;">Card Assignment</h3>
+          <p id="enrollMessage" style="font-size:15px; margin-bottom:25px; color:var(--text-muted);">Start scanning... Please tap card on terminal.</p>
+          <button id="enrollCloseBtn" onclick="closeEnrollModal()" style="display:none;" class="btn">OK</button>
+          <button id="enrollCancelBtn" onclick="cancelEnroll()" style="background:var(--border); color:var(--text-main);" class="btn">Cancel</button>
+      </div>
+  </div>
+
+  <!-- JOKER CARD ENROLLMENT MODAL -->
+  <div id="jokerEnrollModal" class="modal">
+      <div class="modal-content" style="text-align:center;">
+          <h3 style="margin-bottom:15px; font-size:20px;"><i class="fa-solid fa-mask"></i> Joker Card Registration</h3>
+          <p id="jokerEnrollMessage" style="font-size:15px; margin-bottom:25px; color:var(--text-muted);">Please tap the new Joker card on the terminal...</p>
+          <button id="jokerEnrollCloseBtn" onclick="closeJokerEnrollModal()" style="display:none;" class="btn">OK</button>
+          <button id="jokerEnrollCancelBtn" onclick="cancelJokerEnroll()" style="background:var(--border); color:var(--text-main);" class="btn">Cancel</button>
+      </div>
+  </div>
+
+  <!-- JOKER CARD SCAN MODAL (WORKER SELECTION) -->
+  <div id="spareModal" class="modal">
+      <div class="modal-content">
+          <h3 style="margin-bottom:10px; font-size:20px;"><i class="fa-solid fa-mask" style="color:var(--primary);"></i> Joker Card Scanned</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px; line-height: 1.5;">
+            Joker card <code id="spare-card-uid" style="color:var(--primary); font-weight:700; background:var(--bg); padding:2px 6px; border-radius:6px;"></code> was scanned. Select a worker to link this card for today:
+          </p>
+          <label style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px; text-transform: uppercase;">Assign To Worker</label>
+          <select id="spare-worker-select" style="margin-bottom:25px;"></select>
+          <div style="display:flex; gap:10px;">
+            <button class="btn" onclick="submitSpareResolve()" style="flex:1; justify-content:center;"><i class="fa-solid fa-check"></i> Link & Record Punch</button>
+            <button class="btn" onclick="dismissSpareModal()" style="background:var(--border); color:var(--text-main); justify-content:center;">Dismiss</button>
+          </div>
+      </div>
+  </div>
+
+  <script>
+    let globalWorkers = [];
+
+    function setTheme(mode) {
+      if (mode === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('app_theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('app_theme', 'light');
+      }
+    }
+
+    function showTab(tab, evt) {
+      ['dashboard', 'workers', 'settings'].forEach(t => document.getElementById('tab-' + t).style.display = 'none');
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      
+      document.getElementById('tab-' + tab).style.display = 'block';
+      if(evt && evt.currentTarget) {
+        evt.currentTarget.classList.add('active');
+      } else {
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tab)) {
+            btn.classList.add('active');
+          }
+        });
+      }
+      
+      document.getElementById('tab-title').innerText = tab.charAt(0).toUpperCase() + tab.slice(1);
+      if(tab === 'workers') fetchWorkersList();
+      if(tab === 'settings') fetchJokerCards();
+
+      localStorage.setItem('active_dashboard_tab', tab);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('app_theme') || 'light';
+      setTheme(savedTheme);
+
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        if (btn.innerText.toLowerCase().includes(savedTheme === 'dark' ? 'night' : 'light')) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      const savedTab = localStorage.getItem('active_dashboard_tab');
+      if (savedTab && document.getElementById('tab-' + savedTab)) {
+        showTab(savedTab, null);
+      } else {
+        showTab('dashboard', null);
+      }
+    });
+
+    function fetchDashboard() {
+      fetch('/api/dashboard').then(res => res.json()).then(data => {
+        globalWorkers = data.workers || [];
+        const badge = document.getElementById('esp-status');
+        if(!badge) return;
+        badge.className = 'status-badge ' + (data.esp32_online ? 'online' : 'offline');
+        document.getElementById('esp-text').innerText = data.esp32_online ? 'TERMINAL ONLINE' : 'TERMINAL DISCONNECTED';
+
+        const grid = document.getElementById('workers-grid');
+        if(!grid) return;
+        grid.innerHTML = '';
+        if (data.workers.length === 0) {
+          grid.innerHTML = '<p style="color:var(--text-muted);">No workers registered yet.</p>';
+          return;
+        }
+
+        data.workers.forEach(w => {
+          const initial = w.name ? w.name.charAt(0).toUpperCase() : '?';
+          const isIN = (w.status === 'IN');
+          const cardClass = isIN ? 'card-in' : 'card-out';
+          const statusIcon = isIN ? '<i class="fa-solid fa-arrow-right-to-bracket"></i>' : '<i class="fa-solid fa-arrow-right-from-bracket"></i>';
+
+          grid.innerHTML += `
+            <div class="worker-card ${cardClass}" onclick="window.location.href='/api/worker/report/${w.worker_id}'">
+              <div class="avatar">${initial}</div>
+              <h3>${w.name}</h3>
+              <div class="card-footer">
+                <span class="status-tag ${w.status}">${statusIcon} ${w.status}</span>
+                <small style="font-size:11px; color:var(--text-muted);">${w.last_time}</small>
+              </div>
+            </div>`;
+        });
+      });
+    }
+
+    function checkSpareStatus() {
+      fetch('/api/spare/status').then(res => res.json()).then(data => {
+        const modal = document.getElementById('spareModal');
+        if (data.pending && modal.style.display !== 'flex') {
+          document.getElementById('spare-card-uid').innerText = data.card_uid;
+          const select = document.getElementById('spare-worker-select');
+          select.innerHTML = '';
+          if (!globalWorkers || globalWorkers.length === 0) {
+            select.innerHTML = '<option value="">No workers available</option>';
+          } else {
+            globalWorkers.forEach(w => {
+              select.innerHTML += `<option value="${w.worker_id}">${w.name} (${w.worker_id})</option>`;
+            });
+          }
+          modal.style.display = 'flex';
+        }
+      });
+    }
+
+    function submitSpareResolve() {
+      const workerId = document.getElementById('spare-worker-select').value;
+      if (!workerId) return;
+
+      fetch('/api/spare/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ worker_id: workerId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          document.getElementById('spareModal').style.display = 'none';
+          fetchDashboard();
+        } else {
+          alert(data.message || 'Failed to assign punch.');
+        }
+      });
+    }
+
+    function dismissSpareModal() {
+      fetch('/api/spare/dismiss', { method: 'POST' })
+        .then(() => {
+          document.getElementById('spareModal').style.display = 'none';
+        });
+    }
+
+    /* --- JOKER CARDS ENROLLMENT & LISTING --- */
+    let jokerEnrollPollInterval = null;
+
+    function fetchJokerCards() {
+      fetch('/api/joker/list')
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('joker-cards-list');
+          if (!tbody) return;
+          tbody.innerHTML = '';
+          if (!data.joker_cards || data.joker_cards.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted); text-align:center;">No Joker cards registered.</td></tr>';
+            return;
+          }
+          data.joker_cards.forEach(card => {
+            tbody.innerHTML += `
+              <tr>
+                <td><code>${card.card_uid}</code></td>
+                <td>${card.label || 'Joker Card'}</td>
+                <td>
+                  <button type="button" class="btn" style="padding:4px 12px; font-size:12px; background:#ef4444;" onclick="deleteJokerCard(${card.id})">
+                    <i class="fa-solid fa-trash"></i> Delete
+                  </button>
+                </td>
+              </tr>`;
+          });
+        });
+    }
+
+    function startJokerCardScan() {
+      const labelInput = document.getElementById('joker-label-input');
+      const label = labelInput ? labelInput.value.trim() : 'Joker Card';
+
+      document.getElementById('jokerEnrollModal').style.display = 'flex';
+      document.getElementById('jokerEnrollMessage').innerText = "Ready to scan... Please tap the card on the terminal.";
+      document.getElementById('jokerEnrollMessage').style.color = "var(--text-muted)";
+      document.getElementById('jokerEnrollCloseBtn').style.display = 'none';
+      document.getElementById('jokerEnrollCancelBtn').style.display = 'inline-block';
+
+      fetch('/api/joker/enroll/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: label })
+      });
+
+      if (jokerEnrollPollInterval) clearInterval(jokerEnrollPollInterval);
+      jokerEnrollPollInterval = setInterval(pollJokerEnrollStatus, 1000);
+    }
+
+    function pollJokerEnrollStatus() {
+      fetch('/api/joker/enroll/status')
+        .then(res => res.json())
+        .then(data => {
+          if (data.state === 'success') {
+            clearInterval(jokerEnrollPollInterval);
+            document.getElementById('jokerEnrollMessage').innerText = `Success! Registered UID ${data.card_uid} as "${data.label}"`;
+            document.getElementById('jokerEnrollMessage').style.color = "#059669";
+            document.getElementById('jokerEnrollCloseBtn').style.display = 'inline-block';
+            document.getElementById('jokerEnrollCancelBtn').style.display = 'none';
+            const labelInput = document.getElementById('joker-label-input');
+            if (labelInput) labelInput.value = '';
+            fetchJokerCards();
+          } else if (data.state === 'error') {
+            clearInterval(jokerEnrollPollInterval);
+            document.getElementById('jokerEnrollMessage').innerText = `Error: ${data.error}`;
+            document.getElementById('jokerEnrollMessage').style.color = "#dc2626";
+            document.getElementById('jokerEnrollCloseBtn').style.display = 'inline-block';
+            document.getElementById('jokerEnrollCancelBtn').style.display = 'none';
+          }
+        });
+    }
+
+    function cancelJokerEnroll() {
+      if (jokerEnrollPollInterval) clearInterval(jokerEnrollPollInterval);
+      fetch('/api/joker/enroll/cancel', { method: 'POST' });
+      document.getElementById('jokerEnrollModal').style.display = 'none';
+    }
+
+    function closeJokerEnrollModal() {
+      document.getElementById('jokerEnrollModal').style.display = 'none';
+    }
+
+    function deleteJokerCard(jokerId) {
+      if (confirm('Delete this Joker card?')) {
+        fetch('/api/joker/delete/' + jokerId, { method: 'DELETE' })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success') {
+              fetchJokerCards();
+            } else {
+              alert(data.message || 'Error deleting Joker card.');
+            }
+          });
+      }
+    }
+
+    /* --- WORKER MANAGEMENT FUNCTIONS --- */
+    function submitAddWorker() {
+      const autoWorkerId = 'W' + Math.floor(1000 + Math.random() * 9000);
+      const payload = {
+        worker_id: autoWorkerId,
+        name: document.getElementById('add-w-name').value,
+        cin: document.getElementById('add-w-cin').value,
+        phone: document.getElementById('add-w-phone').value
+      };
+
+      fetch('/api/worker/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          document.getElementById('add-w-name').value = '';
+          document.getElementById('add-w-cin').value = '';
+          document.getElementById('add-w-phone').value = '';
+          fetchWorkersList();
+        } else {
+          alert(data.message);
+        }
+      });
+    }
+
+    function fetchWorkersList() {
+      fetch('/api/dashboard').then(res => res.json()).then(data => {
+        const tbody = document.querySelector('#workers-table tbody');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        data.workers.forEach(w => {
+          tbody.innerHTML += `
+            <tr>
+              <td><strong>${w.name}</strong></td>
+              <td>${w.cin || '-'}</td>
+              <td>${w.phone || '-'}</td>
+              <td><code>${w.card_uid || 'Unlinked'}</code></td>
+              <td>
+                <button class="btn" style="padding:6px 14px; font-size:12px; background:#f59e0b;" onclick="startCardScan('${w.worker_id}')">
+                  <i class="fa-solid fa-id-card"></i> Scan Card
+                </button>
+                <button class="btn" style="padding:6px 14px; font-size:12px; background:#3b82f6;" onclick="window.location.href='/api/worker/report/${w.worker_id}'">
+                  <i class="fa-solid fa-file-lines"></i> Report
+                </button>
+                <button class="btn" style="padding:6px 14px; font-size:12px; background:#10b981;" onclick="openEditModal('${w.worker_id}', '${w.name}', '${w.cin || ''}', '${w.phone || ''}')">
+                  <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <button class="btn" style="padding:6px 14px; font-size:12px; background:#ef4444;" onclick="deleteWorker('${w.worker_id}')">
+                  <i class="fa-solid fa-trash"></i> Delete
+                </button>
+              </td>
+            </tr>`;
+        });
+      });
+    }
+
+    let enrollPollInterval = null;
+
+    function startCardScan(workerId) {
+        document.getElementById('enrollModal').style.display = 'flex';
+        document.getElementById('enrollMessage').innerText = "Start scanning... Please tap card on terminal.";
+        document.getElementById('enrollCloseBtn').style.display = 'none';
+        document.getElementById('enrollCancelBtn').style.display = 'inline-block';
+
+        fetch('/api/enroll/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({worker_id: workerId})
+        });
+
+        enrollPollInterval = setInterval(pollEnrollStatus, 1000);
+    }
+
+    function pollEnrollStatus() {
+        fetch('/api/enroll/status')
+        .then(res => res.json())
+        .then(data => {
+            if (data.state === 'success') {
+                clearInterval(enrollPollInterval);
+                document.getElementById('enrollMessage').innerText = `Done! UID ${data.card_uid} bound to ${data.worker_name}`;
+                document.getElementById('enrollCloseBtn').style.display = 'inline-block';
+                document.getElementById('enrollCancelBtn').style.display = 'none';
+                fetchWorkersList();
+            }
+        });
+    }
+
+    function cancelEnroll() {
+        clearInterval(enrollPollInterval);
+        fetch('/api/enroll/cancel', {method: 'POST'});
+        document.getElementById('enrollModal').style.display = 'none';
+    }
+
+    function closeEnrollModal() {
+        document.getElementById('enrollModal').style.display = 'none';
+    }
+
+    function openEditModal(id, name, cin, phone) {
+      document.getElementById('edit-w-id').value = id;
+      document.getElementById('edit-w-name').value = name;
+      document.getElementById('edit-w-cin').value = cin;
+      document.getElementById('edit-w-phone').value = phone;
+      document.getElementById('edit-worker-modal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-worker-modal').style.display = 'none';
+    }
+
+    function submitEditWorker() {
+      const payload = {
+        worker_id: document.getElementById('edit-w-id').value,
+        name: document.getElementById('edit-w-name').value,
+        cin: document.getElementById('edit-w-cin').value,
+        phone: document.getElementById('edit-w-phone').value
+      };
+
+      fetch('/api/worker/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          closeEditModal();
+          fetchWorkersList();
+        } else {
+          alert(data.message);
+        }
+      });
+    }
+
+    function deleteWorker(workerId) {
+      if(confirm('Delete worker?')) fetch('/api/worker/delete/' + workerId, {method: 'DELETE'}).then(() => fetchWorkersList());
+    }
+
+    function selectDatabaseDirectory() {
+      fetch('/api/settings/choose-directory', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            document.getElementById('db_path_input').value = data.path;
+          }
+        });
+    }
+
+    function saveSettings() {
+      const form = document.getElementById('settings-form');
+      if (!form) return;
+      const formData = new FormData(form);
+
+      fetch('/api/settings/update', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' || data.status === 'updated') {
+            alert('Settings saved successfully!');
+            location.reload();
+          } else {
+            alert("Error saving settings: " + (data.message || "Unknown error"));
+          }
+        })
+        .catch(err => {
+          console.error("Save error:", err);
+          alert("Failed to reach server.");
+        });
+    }
+
+    setInterval(() => {
+      fetchDashboard();
+      checkSpareStatus();
+    }, 3000);
+
+    fetchDashboard();
+    checkSpareStatus();
+  </script>
+{% endblock %}
