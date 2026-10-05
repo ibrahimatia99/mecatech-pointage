@@ -1,0 +1,66 @@
+<div class="section-card" style="margin-bottom:0;">
+  <h3><span class="offline-icon" data-icon="gears" aria-hidden="true"></span> <span data-i18n="app_parameters">App Parameters</span></h3>
+
+  <div style="display:flex; flex-direction:column; gap:18px;">
+    <div>
+      <label style="font-size:12px; font-weight:700; color:var(--text-muted);"><span class="offline-icon" data-icon="database" aria-hidden="true"></span> <span data-i18n="database_directory">DATABASE STORAGE DIRECTORY</span></label>
+      <div class="setting-inline" style="margin-top:6px;">
+        <input type="text" id="db_path_input" name="db_path" value="{{ cfg.db_path }}" readonly style="flex:1; background:var(--bg);">
+        <button type="button" class="btn secondary-btn" onclick="selectDatabaseDirectory()">
+          <span class="offline-icon" data-icon="folder-open" aria-hidden="true"></span> Choose Directory
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <label style="font-size:12px; font-weight:700; color:var(--text-muted);"><span class="offline-icon" data-icon="key" aria-hidden="true"></span> <span data-i18n="app_password">APP PASSWORD</span></label>
+      <input type="password" name="app_password" value="" autocomplete="new-password" placeholder="Leave blank to keep current password">
+    </div>
+
+    <div>
+      <label style="font-size:12px; font-weight:700; color:var(--text-muted);"><span class="offline-icon" data-icon="clock-rotate-left" aria-hidden="true"></span> <span data-i18n="auto_purge">AUTO-PURGE HISTORY (DAYS)</span></label>
+      <input type="number" min="0" name="purge_days" value="{{ cfg.purge_days }}" placeholder="Set 0 to disable">
+    </div>
+
+
+    <div class="working-hours-box">
+      <div class="setting-title-row"><div><label class="setting-label"><span data-i18n="attendance_summary">ATTENDANCE RULES</span></label><p class="setting-help">Configure daily schedule and late-arrival detection.</p></div></div>
+      <div class="auto-checkout-grid">
+        <div><label class="setting-label"><span data-i18n="work_start">WORK START</span></label><input type="time" name="work_start_time" value="{{ cfg.work_start_time or '08:00' }}"></div>
+        <div><label class="setting-label"><span data-i18n="late_after">LATE AFTER</span></label><input type="time" name="late_after_time" value="{{ cfg.late_after_time or '08:10' }}"></div>
+        <div><label class="setting-label"><span data-i18n="work_end">WORK END</span></label><input type="time" name="work_end_time" value="{{ cfg.work_end_time or '17:00' }}"></div>
+        <div><label class="setting-label"><span data-i18n="expected_hours">EXPECTED DAILY HOURS</span></label><input type="number" min="1" max="24" name="expected_daily_hours" value="{{ cfg.expected_daily_hours or 8 }}"></div>
+      </div>
+    </div>
+
+    <div class="auto-checkout-box">
+      <div class="setting-title-row">
+        <div>
+          <label class="setting-label"><span class="offline-icon" data-icon="clock" aria-hidden="true"></span> <span data-i18n="auto_checkout">AUTO CHECK-OUT</span></label>
+          <p class="setting-help"><span data-i18n="auto_checkout_help">Automatically close workers who are still IN after the trigger time.</span></p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" name="auto_checkout_enabled" id="auto_checkout_enabled" {% if cfg.auto_checkout_enabled %}checked{% endif %}>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="auto-checkout-grid">
+        <div>
+          <label class="setting-label"><span data-i18n="trigger_time">TRIGGER TIME</span></label>
+          <input type="time" name="auto_checkout_trigger_time" value="{{ cfg.auto_checkout_trigger_time or '20:00' }}">
+          <small><span data-i18n="trigger_help">When the system checks for forgotten check-outs.</span></small>
+        </div>
+        <div>
+          <label class="setting-label"><span data-i18n="checkout_time">CHECK-OUT TIME</span></label>
+          <input type="time" name="auto_checkout_time" value="{{ cfg.auto_checkout_time or '18:00' }}">
+          <small><span data-i18n="checkout_help">Time written into the attendance record.</span></small>
+        </div>
+      </div>
+
+      <div class="auto-checkout-note">
+        <span data-i18n="checkout_example">Example: Trigger <strong>20:00</strong> + Check-out <strong>18:00</strong> → a worker still IN at 20:00 receives an automatic OUT at 18:00.</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# Build outputs
+build/
+dist/
+installer/*.exe
+*.spec.bak
+
+# Local runtime data — never commit production attendance
+attendance.db
+demo_data/*.db
+*.db-wal
+*.db-shm
+backups/
+uploads/
+logs/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

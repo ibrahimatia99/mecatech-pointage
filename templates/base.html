@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="{{ cfg.language or 'en' }}" dir="{{ 'rtl' if (cfg.language or 'en') == 'ar' else 'ltr' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ cfg.app_name }}{% endblock %}</title>
+  {% if cfg.app_icon %}<link rel="icon" type="image/png" href="{{ cfg.app_icon }}">{% endif %}
+
+  <!-- All GUI resources are local: no Google Fonts, CDN, or Internet dependency. -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/offline-icons.css') }}">
+  <script src="{{ url_for('static', filename='js/icons.js') }}" defer></script>
+  <script>
+    window.APP_LANGUAGE = {{ (cfg.language or 'en')|tojson }};
+    window.APP_I18N = {
+      en: {
+        dashboard:'Dashboard', workers:'Workers', settings:'Settings', sign_out:'Sign Out',
+        terminal_online:'TERMINAL ONLINE', terminal_disconnected:'TERMINAL DISCONNECTED',
+        no_workers:'No workers registered yet.', report:'Report', full_report:'Full Report', attendance_log:'Attendance Log', attendance_log_help:'Every IN/OUT event for this worker, with correction and deletion controls.', edit:'Edit', delete:'Delete',
+        scan_card:'Scan Card', save_worker:'Save Worker', add_new_worker:'Add New Worker',
+        full_name:'Full Name', cin_number:'CIN Number', phone_number:'Phone Number', card_uid:'Card UID', actions:'Actions',
+        edit_worker:'Edit Worker', save_changes:'Save Changes', cancel:'Cancel',
+        card_assignment:'Card Assignment', start_scanning:'Start scanning... Please tap card on terminal.',
+        settings_customization:'Settings & Customization', app_name:'APP NAME', primary_color:'PRIMARY COLOR',
+        app_logo:'APP LOGO', app_icon:'APP ICON / FAVICON', language:'LANGUAGE', language_help:'Choose the interface language.',
+        app_parameters:'App Parameters', database_directory:'DATABASE STORAGE DIRECTORY', choose_directory:'Choose Directory',
+        app_password:'APP PASSWORD', auto_purge:'AUTO-PURGE HISTORY (DAYS)',
+        auto_checkout:'AUTO CHECK-OUT', auto_checkout_help:'Automatically close workers who are still IN after the trigger time.',
+        trigger_time:'TRIGGER TIME', trigger_help:'When the system checks for forgotten check-outs.',
+        checkout_time:'CHECK-OUT TIME', checkout_help:'Time written into the attendance record.',
+        checkout_example:'Example: Trigger 20:00 + Check-out 18:00 → a worker still IN at 20:00 receives an automatic OUT at 18:00.',
+        save_customization:'Save All Customization',
+        settings_saved:'Settings saved successfully!', save_error:'Error saving settings', server_error:'Failed to reach server.',
+        no_activity:'No activity logged for this date range.', from_date:'FROM DATE', to_date:'TO DATE', filter:'Filter', reset:'Reset',
+        back_dashboard:'Back to Dashboard', back_report:'Back to Report', print_report:'Print Official Report', attendance_report:'Attendance Report',
+        this_week:'THIS WEEK', this_month:'THIS MONTH', selected_range:'SELECTED RANGE', total:'Total',
+        edit_attendance:'Edit Attendance Record', attendance_action:'Attendance action', date:'Date', time:'Time',
+        update:'Save Changes', update_success:'Attendance record updated successfully.', delete_record:'Delete Record', delete_confirm:'Delete this attendance record? This cannot be undone.',
+        invalid_time:'Please enter a valid date and time.', audit:'Audit trail', backup_restore:'Backup & Restore', create_backup:'Create Backup', restore_database:'Restore Database', download:'Download', today_attendance:"Today's Attendance", employees:'Employees', present:'Present', checked_out:'Checked Out', absent:'Absent', late:'Late', on_leave:'On Leave', weekend:'Weekend', worked:'Worked', first_in:'First IN', last_out:'Last OUT', monthly_report:'Monthly Report', calendar_view:'Calendar', leave:'Leave', leave_type:'Leave type', leave_start:'Start date', leave_end:'End date', leave_note:'Note', add_leave:'Add Leave', no_leaves:'No leave records.', delete_leave:'Delete leave', leave_delete_confirm:'Delete this leave record? This cannot be undone.', expected_hours:'Expected hours', work_start:'Work start', late_after:'Late after', work_end:'Work end', late_by:'Late by', reason:'Reason for correction', save:'Save', close:'Close', backup_success:'Backup created successfully.', restore_success:'Database restored. Please reload the application.', export_pdf:'PDF', export_excel:'Excel', export_csv:'CSV', monthly:'Monthly', attendance_summary:'Attendance summary', upcoming:'Upcoming',
+      },
+      fr: {
+        dashboard:'Tableau de bord', workers:'Employés', settings:'Paramètres', sign_out:'Déconnexion',
+        terminal_online:'TERMINAL EN LIGNE', terminal_disconnected:'TERMINAL DÉCONNECTÉ',
+        no_workers:'Aucun employé enregistré.', report:'Rapport', full_report:'Rapport complet', attendance_log:'Journal de pointage', attendance_log_help:'Chaque événement ENTRÉE/SORTIE de cet employé, avec options de correction et suppression.', edit:'Modifier', delete:'Supprimer',
+        scan_card:'Scanner la carte', save_worker:'Enregistrer', add_new_worker:'Ajouter un employé',
+        full_name:'Nom complet', cin_number:'Numéro CIN', phone_number:'Téléphone', card_uid:'UID carte', actions:'Actions',
+        edit_worker:'Modifier l’employé', save_changes:'Enregistrer les modifications', cancel:'Annuler',
+        card_assignment:'Attribution de carte', start_scanning:'Démarrage du scan... Présentez la carte sur le terminal.',
+        settings_customization:'Paramètres et personnalisation', app_name:'NOM DE L’APPLICATION', primary_color:'COULEUR PRINCIPALE',
+        app_logo:'LOGO DE L’APPLICATION', app_icon:'ICÔNE / FAVICON', language:'LANGUE', language_help:'Choisissez la langue de l’interface.',
+        app_parameters:'Paramètres de l’application', database_directory:'DOSSIER DE STOCKAGE DES DONNÉES', choose_directory:'Choisir le dossier',
+        app_password:'MOT DE PASSE', auto_purge:'PURGE AUTOMATIQUE DE L’HISTORIQUE (JOURS)',
+        auto_checkout:'SORTIE AUTOMATIQUE', auto_checkout_help:'Ferme automatiquement les employés encore ENTRÉS après l’heure de déclenchement.',
+        trigger_time:'HEURE DE DÉCLENCHEMENT', trigger_help:'Moment où le système recherche les sorties oubliées.',
+        checkout_time:'HEURE DE SORTIE', checkout_help:'Heure inscrite dans l’enregistrement.',
+        checkout_example:'Exemple : Déclenchement 20:00 + Sortie 18:00 → un employé encore ENTRÉ à 20:00 reçoit une sortie automatique à 18:00.',
+        save_customization:'Enregistrer la personnalisation',
+        settings_saved:'Paramètres enregistrés !', save_error:'Erreur lors de l’enregistrement', server_error:'Impossible de joindre le serveur.',
+        no_activity:'Aucune activité pour cette période.', from_date:'DU', to_date:'AU', filter:'Filtrer', reset:'Réinitialiser',
+        back_dashboard:'Retour au tableau de bord', back_report:'Retour au rapport', print_report:'Imprimer le rapport officiel', attendance_report:'Rapport de présence',
+        this_week:'CETTE SEMAINE', this_month:'CE MOIS', selected_range:'PÉRIODE SÉLECTIONNÉE', total:'Total',
+        edit_attendance:'Modifier le pointage', attendance_action:'Action de pointage', date:'Date', time:'Heure',
+        update:'Enregistrer', update_success:'Pointage mis à jour.', delete_record:'Supprimer le pointage', delete_confirm:'Supprimer ce pointage ? Cette action est irréversible.',
+        invalid_time:'Veuillez saisir une date et une heure valides.', audit:'Journal des actions', backup_restore:'Sauvegarde et restauration', create_backup:'Créer une sauvegarde', restore_database:'Restaurer la base', download:'Télécharger', today_attendance:'Pointage du jour', employees:'Employés', present:'Présent', checked_out:'Sorti', absent:'Absent', late:'En retard', on_leave:'En congé', weekend:'Week-end', worked:'Temps travaillé', first_in:'Première entrée', last_out:'Dernière sortie', monthly_report:'Rapport mensuel', calendar_view:'Calendrier', leave:'Congés', leave_type:'Type de congé', leave_start:'Date de début', leave_end:'Date de fin', leave_note:'Note', add_leave:'Ajouter un congé', no_leaves:'Aucun congé.', delete_leave:'Supprimer le congé', leave_delete_confirm:'Supprimer ce congé ? Cette action est irréversible.', expected_hours:'Heures prévues', work_start:'Début', late_after:'Retard après', work_end:'Fin', late_by:'Retard de', reason:'Motif de correction', save:'Enregistrer', close:'Fermer', backup_success:'Sauvegarde créée.', restore_success:'Base restaurée. Rechargez l’application.', export_pdf:'PDF', export_excel:'Excel', export_csv:'CSV', monthly:'Mensuel', attendance_summary:'Résumé de présence',
+      },
+      ar: {
+        dashboard:'لوحة التحكم', workers:'الموظفون', settings:'الإعدادات', sign_out:'تسجيل الخروج',
+        terminal_online:'الطرفية متصلة', terminal_disconnected:'الطرفية غير متصلة',
+        no_workers:'لا يوجد موظفون مسجلون.', report:'السجل', full_report:'السجل الكامل', attendance_log:'سجل الحضور', attendance_log_help:'كل عمليات الدخول والخروج لهذا الموظف مع أدوات التصحيح والحذف.', edit:'تعديل', delete:'حذف',
+        scan_card:'مسح البطاقة', save_worker:'حفظ الموظف', add_new_worker:'إضافة موظف جديد',
+        full_name:'الاسم الكامل', cin_number:'رقم بطاقة التعريف', phone_number:'رقم الهاتف', card_uid:'معرّف البطاقة', actions:'الإجراءات',
+        edit_worker:'تعديل الموظف', save_changes:'حفظ التغييرات', cancel:'إلغاء',
+        card_assignment:'تخصيص البطاقة', start_scanning:'جارٍ بدء المسح... مرّر البطاقة على الطرفية.',
+        settings_customization:'الإعدادات والتخصيص', app_name:'اسم التطبيق', primary_color:'اللون الرئيسي',
+        app_logo:'شعار التطبيق', app_icon:'أيقونة التطبيق / FAVICON', language:'اللغة', language_help:'اختر لغة واجهة التطبيق.',
+        app_parameters:'إعدادات التطبيق', database_directory:'مجلد تخزين البيانات', choose_directory:'اختيار المجلد',
+        app_password:'كلمة مرور التطبيق', auto_purge:'حذف السجل تلقائياً (بالأيام)',
+        auto_checkout:'الخروج التلقائي', auto_checkout_help:'إغلاق حضور الموظفين الذين ما زالوا في حالة دخول بعد وقت التفعيل.',
+        trigger_time:'وقت التفعيل', trigger_help:'الوقت الذي يبحث فيه النظام عن عمليات الخروج المنسية.',
+        checkout_time:'وقت الخروج', checkout_help:'الوقت الذي يتم تسجيله في سجل الحضور.',
+        checkout_example:'مثال: التفعيل 20:00 + الخروج 18:00 ← الموظف الذي ما زال داخلًا عند 20:00 يحصل على خروج تلقائي الساعة 18:00.',
+        save_customization:'حفظ جميع التخصيصات',
+        settings_saved:'تم حفظ الإعدادات!', save_error:'خطأ أثناء حفظ الإعدادات', server_error:'تعذر الاتصال بالخادم.',
+        no_activity:'لا يوجد نشاط في هذه الفترة.', from_date:'من تاريخ', to_date:'إلى تاريخ', filter:'تصفية', reset:'إعادة ضبط',
+        back_dashboard:'العودة إلى لوحة التحكم', back_report:'العودة إلى السجل', print_report:'طباعة السجل الرسمي', attendance_report:'سجل الحضور',
+        this_week:'هذا الأسبوع', this_month:'هذا الشهر', selected_range:'الفترة المحددة', total:'المجموع',
+        edit_attendance:'تعديل سجل الحضور', attendance_action:'حركة الحضور', date:'التاريخ', time:'الوقت',
+        update:'حفظ التغييرات', update_success:'تم تحديث سجل الحضور بنجاح.', delete_record:'حذف سجل الحضور', delete_confirm:'هل تريد حذف سجل الحضور هذا؟ لا يمكن التراجع عن هذا الإجراء.',
+        invalid_time:'يرجى إدخال تاريخ ووقت صحيحين.', audit:'سجل التدقيق', backup_restore:'النسخ الاحتياطي والاستعادة', create_backup:'إنشاء نسخة احتياطية', restore_database:'استعادة قاعدة البيانات', download:'تنزيل', today_attendance:'حضور اليوم', employees:'الموظفون', present:'حاضر', checked_out:'انصرف', absent:'غائب', late:'متأخر', on_leave:'في إجازة', weekend:'عطلة نهاية الأسبوع', worked:'الوقت العامل', first_in:'أول دخول', last_out:'آخر خروج', monthly_report:'التقرير الشهري', calendar_view:'التقويم', leave:'الإجازات', leave_type:'نوع الإجازة', leave_start:'تاريخ البداية', leave_end:'تاريخ النهاية', leave_note:'ملاحظة', add_leave:'إضافة إجازة', no_leaves:'لا توجد إجازات.', delete_leave:'حذف الإجازة', leave_delete_confirm:'حذف سجل الإجازة هذا؟ لا يمكن التراجع عن هذا الإجراء.', expected_hours:'الساعات المتوقعة', work_start:'بداية العمل', late_after:'التأخر بعد', work_end:'نهاية العمل', late_by:'تأخر بمقدار', reason:'سبب التصحيح', save:'حفظ', close:'إغلاق', backup_success:'تم إنشاء النسخة الاحتياطية.', restore_success:'تمت استعادة قاعدة البيانات. يرجى إعادة تحميل التطبيق.', export_pdf:'PDF', export_excel:'Excel', export_csv:'CSV', monthly:'شهري', attendance_summary:'ملخص الحضور', upcoming:'قادم',
+      }
+    };
+    window.t = function(key, fallback) {
+      const lang = window.APP_LANGUAGE || 'en';
+      let value = (window.APP_I18N[lang] && window.APP_I18N[lang][key]) || window.APP_I18N.en[key] || fallback || key;
+      return String(value);
+    };
+    window.applyTranslations = function(root) {
+      const scope = root || document;
+      scope.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = window.t(el.dataset.i18n, el.textContent); });
+      scope.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = window.t(el.dataset.i18nPlaceholder, el.placeholder); });
+      document.title = document.title.replace(/^[^|]+/, (window.APP_I18N[window.APP_LANGUAGE]?.app_name || 'Mecatech Pointage'));
+    };
+    document.addEventListener('DOMContentLoaded', () => window.applyTranslations(document));
+  </script>
+
+  <style>
+    :root {
+      --primary: {{ cfg.primary_color }};
+      --primary-strong: {{ cfg.primary_color }};
+    }
+    [dir="rtl"] body { text-align: right; }
+    [dir="rtl"] .nav-btn, [dir="rtl"] th, [dir="rtl"] td { text-align: right; }
+    [dir="rtl"] .nav-btn:hover { transform: translateX(-2px); }
+  </style>
+  {% block extra_head %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  {% block layout %}{% endblock %}
+</body>
+</html>

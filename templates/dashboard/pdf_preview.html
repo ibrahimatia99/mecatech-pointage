@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<style>
+html,body{height:100%;overflow:hidden!important;}
+.pdf-preview-page{padding:18px 22px; height:100vh; box-sizing:border-box;}
+.pdf-preview-shell{max-width:1200px;height:calc(100vh - 36px);margin:0 auto;display:flex;flex-direction:column;gap:12px;}
+.pdf-preview-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:12px 14px;}
+.pdf-preview-title{font-weight:800;font-size:15px;}
+.pdf-preview-subtitle{font-size:11px;color:var(--text-muted);margin-top:3px;}
+.pdf-preview-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.pdf-preview-frame{flex:1;min-height:0;width:100%;border:1px solid var(--border);border-radius:16px;background:#fff;}
+.btn{padding:10px 18px;border:none;border-radius:999px;background:var(--primary);color:#fff;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;}
+.secondary{background:var(--border);color:var(--text-main);}
+@media(max-width:700px){.pdf-preview-page{padding:10px}.pdf-preview-shell{height:calc(100vh - 20px)}.pdf-preview-toolbar{align-items:flex-start}.pdf-preview-actions{width:100%}.pdf-preview-actions .btn{flex:1;justify-content:center}}
+</style>
+{% endblock %}
+
+{% block layout %}
+<div class="pdf-preview-page">
+  <div class="pdf-preview-shell">
+    <div class="pdf-preview-toolbar">
+      <div>
+        <div class="pdf-preview-title"><span class="offline-icon" data-icon="file-pdf" aria-hidden="true"></span> PDF — {{ worker_name }}</div>
+        <div class="pdf-preview-subtitle">Mecatech Pointage · official attendance report</div>
+      </div>
+      <div class="pdf-preview-actions">
+        <a class="btn secondary" href="/api/worker/report/{{ worker_id|urlencode }}"><span class="offline-icon" data-icon="arrow-left" aria-hidden="true"></span> <span data-i18n="back_report">Back to Report</span></a>
+        <button class="btn" type="button" onclick="printPdf()"><span class="offline-icon" data-icon="print" aria-hidden="true"></span> <span data-i18n="print_report">Print</span></button>
+        <a class="btn" href="/api/worker/export/{{ worker_id|urlencode }}?format=pdf&inline=1&start_date={{ start_date }}&end_date={{ end_date }}"><span class="offline-icon" data-icon="download" aria-hidden="true"></span> <span data-i18n="download">Download PDF</span></a>
+      </div>
+    </div>
+    <iframe id="pdf-frame" class="pdf-preview-frame" title="Attendance PDF preview" src="/api/worker/export/{{ worker_id|urlencode }}?format=pdf&inline=1&start_date={{ start_date }}&end_date={{ end_date }}"></iframe>
+  </div>
+</div>
+<script>
+function printPdf(){ const frame=document.getElementById('pdf-frame'); try{ frame.contentWindow.focus(); frame.contentWindow.print(); }catch(e){ window.print(); } }
+window.addEventListener('DOMContentLoaded',()=>{if(window.applyTranslations)window.applyTranslations(document);if(window.renderOfflineIcons)window.renderOfflineIcons();});
+</script>
+{% endblock %}

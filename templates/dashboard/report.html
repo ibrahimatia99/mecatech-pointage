@@ -1,0 +1,487 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<style>
+  :root {
+    --bg: #f4f5f9;
+    --card-bg: #ffffff;
+    --text-main: #1e1b2e;
+    --text-muted: #8e8ba7;
+    --primary: {{ cfg.primary_color }};
+    --primary-light: {{ cfg.primary_color }}22;
+    --border: #e9e8f4;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text-main);
+    height: 100%;
+    overflow-y: auto !important;
+  }
+
+  body { padding: 30px; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .report-container { max-width: 900px; width: 100%; margin: 0 auto; padding-bottom: 50px; }
+  
+  .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 25px; }
+  
+  .summary-grid { display: flex; gap: 15px; margin-bottom: 25px; }
+  .summary-box { flex: 1; background: var(--card-bg); border: 1px solid var(--border); padding: 14px 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+  
+  .days-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+  .daily-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; background: var(--card-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+  
+  .status-tag { padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 700; }
+  .status-tag.IN { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .status-tag.OUT { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+  .filter-bar { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 25px; background: var(--card-bg); padding: 15px; border-radius: 16px; border: 1px solid var(--border); }
+  input[type="date"] { width: 100%; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text-main); font-size: 13px; outline: none; }
+
+  .no-print { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+  .btn { padding: 10px 20px; border: none; border-radius: 50px; background: var(--primary); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+  .log-row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:6px 0; border-bottom:1px dashed var(--border); }
+  .log-actions { display:flex; align-items:center; gap:8px; }
+  .edit-log-btn { border:1px solid var(--border); background:var(--bg); color:var(--text-main); border-radius:8px; padding:5px 8px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; }
+  .report-modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(15,13,26,.45); z-index:1000; padding:20px; }
+  .report-modal.open { display:flex; }
+  .report-modal-content { width:min(480px,100%); background:var(--card-bg); border:1px solid var(--border); border-radius:20px; padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+  .report-modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:18px 0; }
+  .report-modal-grid label { display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px; }
+  .report-modal-grid input, .report-modal-grid select { width:100%; padding:11px 12px; border:1.5px solid var(--border); background:var(--bg); color:var(--text-main); border-radius:10px; }
+
+  .readonly-action {
+    width:100%; padding:11px 12px; border:1.5px solid var(--border); background:var(--surface-2); color:var(--text-main); border-radius:10px; font-size:13px; font-weight:800; letter-spacing:.04em;
+  }
+  .modal-error { min-height:18px; color:#dc2626; font-size:12px; margin-bottom:10px; }
+  @media (max-width: 620px) { .days-grid { grid-template-columns:1fr; } .report-modal-grid { grid-template-columns:1fr; } }
+
+  .report-container { max-width:1100px; }
+  .no-print { position:sticky; top:0; z-index:20; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(12px); padding:4px 0 18px; }
+  .header-flex { margin-bottom:22px; padding:20px 22px; background:var(--card-bg); border:1px solid var(--border); border-radius:20px; box-shadow:0 8px 26px rgba(30,27,46,.05); }
+  .summary-grid { gap:14px; }
+  .summary-box { padding:18px 20px; border-radius:16px; box-shadow:0 6px 20px rgba(30,27,46,.05); }
+  .days-grid { gap:16px; }
+  .report-log-section { margin-top: 18px; }
+  .report-log-heading { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:14px; }
+  .report-log-heading h2 { font-size:17px; margin:0; }
+  .report-log-heading p { margin:4px 0 0; color:var(--text-muted); font-size:12px; }
+  .report-empty, .report-loading, .report-error { background:var(--card-bg); border:1px dashed var(--border); border-radius:16px; padding:28px; text-align:center; color:var(--text-muted); }
+  .report-error { color:#b91c1c; border-color:#fecaca; background:#fff7f7; }
+  .report-action-group { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .btn.pdf-btn { background:var(--primary); }
+  .pdf-preview-shell { max-width:1200px; height:calc(100vh - 100px); margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+  .pdf-preview-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .pdf-preview-frame { flex:1; min-height:0; width:100%; border:1px solid var(--border); border-radius:16px; background:#fff; }
+  .daily-card { border-radius:18px; padding:17px 18px; box-shadow:0 6px 20px rgba(30,27,46,.05); }
+  .log-row { padding:9px 0; }
+  .log-main { display:flex; align-items:center; gap:12px; min-width:0; }
+  .log-time { font-size:14px; font-weight:700; letter-spacing:.01em; }
+  .log-actions { flex:0 0 auto; }
+  .edit-log-btn, .icon-danger-btn { transition:all .16s ease; }
+  .edit-log-btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+  .icon-danger-btn { width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #fecaca; background:#fff5f5; color:#dc2626; border-radius:9px; cursor:pointer; }
+  .icon-danger-btn:hover { background:#fee2e2; border-color:#fca5a5; }
+  .report-modal-content { box-shadow:0 28px 80px rgba(30,27,46,.22); }
+  .report-modal-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .modal-kicker { display:block; margin-bottom:3px; color:var(--text-muted); font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+  .modal-close-btn { width:34px; height:34px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); font-size:20px; line-height:1; cursor:pointer; }
+  .modal-close-btn:hover { border-color:var(--primary); color:var(--primary); }
+  .modal-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .modal-actions-right { display:flex; gap:10px; }
+  .neutral-btn { background:var(--border); color:var(--text-main); box-shadow:none; }
+  .danger-outline { background:transparent; color:#dc2626; border:1px solid #fecaca; box-shadow:none; }
+  .danger-outline:hover { background:#fff5f5; border-color:#fca5a5; }
+  @media (max-width:620px) {
+    .no-print { position:static; flex-wrap:wrap; gap:8px; }
+    .header-flex { padding:16px; flex-direction:column; align-items:flex-start; }
+    .summary-grid { display:grid; grid-template-columns:1fr; }
+    .log-row { align-items:flex-start; }
+    .log-actions { display:flex; }
+    .modal-actions { flex-direction:column-reverse; align-items:stretch; }
+    .modal-actions-right { justify-content:flex-end; }
+  }
+
+  /* FULL A4 EDGE-TO-EDGE PRINT STYLES */
+  @page {
+    size: A4 portrait;
+    margin: 4mm;
+  }
+
+  
+  .section-card { background:var(--card-bg); border:1px solid var(--border); border-radius:18px; padding:18px; box-shadow:0 6px 20px rgba(30,27,46,.05); margin-bottom:18px; }
+  .section-subtitle { color:var(--text-muted); font-size:12px; margin-top:4px; }
+  .calendar-heading h2 { margin:0; font-size:17px; }
+  .calendar-heading input { width:160px; }
+  .calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; margin-top:16px; }
+  .calendar-weekday { text-align:center; font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase; padding:7px 2px; }
+  .calendar-day { min-height:62px; border:1px solid var(--border); border-radius:12px; background:var(--bg); color:var(--text-main); padding:8px; display:flex; flex-direction:column; justify-content:space-between; text-align:left; cursor:pointer; }
+  button.calendar-day { font:inherit; }
+  .calendar-day span { font-size:12px; font-weight:800; }
+  .calendar-day small { font-size:9px; color:var(--text-muted); }
+  .calendar-day:hover { border-color:var(--primary); transform:translateY(-1px); }
+  .day-present { background:#ecfdf3; border-color:#b7ebca; } .day-late { background:#fff7e8; border-color:#f7d48c; } .day-absent { background:#fff3f3; border-color:#f4c5c5; } .day-leave { background:#f4efff; border-color:#d8c8ff; } .day-weekend { background:#f4f4f5; border-color:#e3e4e8; } .calendar-empty { background:transparent; border-color:transparent; cursor:default; }
+  .secondary-btn { background:var(--card-bg); color:var(--text-main); border:1px solid var(--border); box-shadow:none; }
+  @media(max-width:620px){.calendar-grid{gap:5px}.calendar-day{min-height:54px;padding:6px}.calendar-day small{font-size:8px}.calendar-heading{align-items:flex-start;flex-direction:column}.calendar-heading input{width:100%}}
+
+@media print {
+    html, body {
+      background: #ffffff !important;
+      color: #000000 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    .no-print, .filter-bar { display: none !important; }
+
+    .report-container {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .days-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 6mm !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .daily-card {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      border: 1px solid #9ca3af !important;
+      border-radius: 6px !important;
+      padding: 8px 12px !important;
+      background: #ffffff !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
+      box-shadow: none !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block layout %}
+<div class="report-container">
+  <div class="no-print">
+    <a href="/" class="btn" style="background: var(--border); color: var(--text-main);">
+      <span class="offline-icon" data-icon="arrow-left" aria-hidden="true"></span> <span data-i18n="back_dashboard">Back to Dashboard</span>
+    </a>
+    <div class="report-action-group">
+      <button class="btn secondary-btn" type="button" onclick="window.print()"><span class="offline-icon" data-icon="print" aria-hidden="true"></span> <span data-i18n="print_report">Print Official Report</span></button>
+      <button class="btn pdf-btn" type="button" onclick="openPdfPreview()"><span class="offline-icon" data-icon="file-pdf" aria-hidden="true"></span> <span data-i18n="export_pdf">PDF</span></button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <div style="flex:1;">
+      <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;"><span data-i18n="from_date">FROM DATE</span></label>
+      <input type="date" id="history-start-date">
+    </div>
+    <div style="flex:1;">
+      <label style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;"><span data-i18n="to_date">TO DATE</span></label>
+      <input type="date" id="history-end-date">
+    </div>
+    <button class="btn" onclick="loadReportData()" style="padding: 9px 18px; font-size: 13px;">
+      <span class="offline-icon" data-icon="filter" aria-hidden="true"></span> <span data-i18n="filter">Filter</span>
+    </button>
+    <button class="btn" onclick="resetDateFilter()" style="padding: 9px 14px; font-size: 13px; background: var(--border); color: var(--text-main);">
+      <span data-i18n="reset">Reset</span>
+    </button>
+  </div>
+
+  <div class="header-flex">
+    <div>
+      <h1 id="r-worker-name" style="font-size: 24px; margin-bottom: 4px;">Loading...</h1>
+      <p id="r-worker-id" style="font-size: 14px; color: var(--text-muted);"></p>
+    </div>
+    <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+      <div>
+        <h3 style="font-size: 18px; color: var(--primary); margin: 0;">{{ cfg.app_name }}</h3>
+        <span style="font-size: 12px; color: var(--text-muted);"><span data-i18n="attendance_report">Attendance Report</span></span>
+      </div>
+      {% if cfg.app_logo %}
+        <img src="{{ cfg.app_logo }}" alt="Logo" style="width: 36px; height: 36px; border-radius: 8px; object-fit: contain;">
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="summary-grid" id="monthly-summary-grid">
+    <div class="summary-box"><span data-i18n="present">PRESENT</span><strong id="m-present">0</strong></div>
+    <div class="summary-box"><span data-i18n="absent">ABSENT</span><strong id="m-absent">0</strong></div>
+    <div class="summary-box"><span data-i18n="late">LATE</span><strong id="m-late">0</strong></div>
+    <div class="summary-box"><span data-i18n="on_leave">LEAVE</span><strong id="m-leave">0</strong></div>
+    <div class="summary-box"><span data-i18n="worked">WORKED</span><strong id="m-worked">0h 00m</strong></div>
+  </div>
+
+  <div class="section-card report-calendar-card">
+    <div class="calendar-heading"><div><h2><span class="offline-icon" data-icon="calendar-days" aria-hidden="true"></span> <span data-i18n="calendar_view">Calendar</span></h2><p class="section-subtitle">Monthly attendance overview.</p></div><input type="month" id="report-month" onchange="loadReportMonth()"></div>
+    <div class="calendar-grid" id="attendance-calendar"></div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-box">
+      <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block;"><span data-i18n="this_week">THIS WEEK</span></span>
+      <strong id="r-week-total" style="font-size: 18px; color: var(--primary);">0h 0m</strong>
+    </div>
+    <div class="summary-box">
+      <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block;"><span data-i18n="this_month">THIS MONTH</span></span>
+      <strong id="r-month-total" style="font-size: 18px; color: var(--primary);">0h 0m</strong>
+    </div>
+    <div class="summary-box">
+      <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block;"><span data-i18n="selected_range">SELECTED RANGE</span></span>
+      <strong id="r-range-total" style="font-size: 18px; color: var(--primary);">0h 0m</strong>
+    </div>
+  </div>
+
+  <div class="report-log-section">
+    <div class="report-log-heading">
+      <div><h2><span class="offline-icon" data-icon="list-check" aria-hidden="true"></span> <span data-i18n="attendance_log">Attendance Log</span></h2><p data-i18n="attendance_log_help">Every IN/OUT event for this worker, with correction and deletion controls.</p></div>
+      <span id="report-log-count" class="status-pill" style="display:none;"></span>
+    </div>
+    <div id="r-days-container" class="days-grid"></div>
+  </div>
+</div>
+
+<div id="edit-log-modal" class="report-modal" role="dialog" aria-modal="true" aria-labelledby="edit-log-title">
+  <div class="report-modal-content">
+    <div class="report-modal-heading">
+      <div>
+        <span class="modal-kicker" data-i18n="attendance_action">Attendance action</span>
+        <h3 id="edit-log-title"><span class="offline-icon" data-icon="pen" aria-hidden="true"></span> <span data-i18n="edit_attendance">Edit Attendance Record</span></h3>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeEditLogModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="report-modal-grid">
+      <div>
+        <label data-i18n="date">Date</label>
+        <input type="date" id="edit-log-date">
+      </div>
+      <div>
+        <label data-i18n="time">Time</label>
+        <input type="time" id="edit-log-time">
+      </div>
+      <div style="grid-column:1 / -1;">
+        <label data-i18n="attendance_action">Action</label>
+        <div id="edit-log-action-display" class="readonly-action" aria-live="polite">IN</div>
+      </div>
+    </div>
+    <div><label data-i18n="reason">Reason for correction</label><input id="edit-log-reason" type="text" placeholder="Reason"></div>
+    <div id="edit-log-error" class="modal-error"></div>
+    <div class="modal-actions">
+      <button class="btn danger-outline" type="button" onclick="deleteEditingLog()">
+        <span class="offline-icon" data-icon="trash" aria-hidden="true"></span> <span data-i18n="delete_record">Delete Record</span>
+      </button>
+      <div class="modal-actions-right">
+        <button class="btn neutral-btn" type="button" onclick="closeEditLogModal()"><span data-i18n="cancel">Cancel</span></button>
+        <button class="btn" type="button" onclick="saveEditedLog()"><span data-i18n="update">Save Changes</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const workerId = {{ worker_id|tojson }};
+  let editingLogId = null;
+  function escapeHtml(value){return String(value ?? '').replace(/[&<>'\"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;',"\"":'&quot;'}[ch]));}
+
+  function loadReportData() {
+    const container = document.getElementById('r-days-container');
+    if (container) container.innerHTML = '<div class="report-loading">Loading attendance log…</div>';
+    const start = document.getElementById('history-start-date').value;
+    const end = document.getElementById('history-end-date').value;
+
+    let url = `/api/worker/history/${encodeURIComponent(workerId)}?`;
+    if (start) url += `start_date=${start}&`;
+    if (end) url += `end_date=${end}`;
+
+    fetch(url)
+      .then(async res => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || `Server error (${res.status})`);
+        return data;
+      })
+      .then(data => {
+        if (!data.worker || !data.worker.worker_id) {
+          throw new Error('Worker record not found in the active database.');
+        }
+        document.getElementById('r-worker-name').innerText = data.worker.name;
+        document.getElementById('r-worker-id').innerText = `CIN: ${data.worker.cin || '-'} | Phone: ${data.worker.phone || '-'}`;
+        
+        document.getElementById('r-week-total').innerText = data.week_total;
+        document.getElementById('r-month-total').innerText = data.month_total;
+        document.getElementById('r-range-total').innerText = data.range_total;
+        const m=data.monthly_summary||{}; document.getElementById('m-present').innerText=m.present_days||0; document.getElementById('m-absent').innerText=m.absent_days||0; document.getElementById('m-late').innerText=m.late_days||0; document.getElementById('m-leave').innerText=m.leave_days||0; document.getElementById('m-worked').innerText=m.worked||'0h 00m';
+        if(data.calendar_month){document.getElementById('report-month').value=data.calendar_month; renderCalendar(data.calendar_month, data.calendar_days||[], data.leave_days||[]);}
+
+        const container = document.getElementById('r-days-container');
+        container.innerHTML = '';
+
+        if (!data.days || data.days.length === 0) {
+          container.innerHTML = '<div class="report-empty"><strong>No attendance records</strong><p style="margin-top:6px;">No IN/OUT events exist for this date range.</p></div>';
+        } else {
+          data.days.forEach(day => {
+            let rowsHtml = '';
+            day.logs.forEach(l => {
+              const icon = l.action === 'IN' ? '<span class="offline-icon" data-icon="arrow-right-to-bracket" aria-hidden="true"></span>' : '<span class="offline-icon" data-icon="arrow-right-from-bracket" aria-hidden="true"></span>';
+              rowsHtml += `
+                <div class="log-row">
+                  <div class="log-main">
+                    <span class="status-tag ${l.action}">${icon} ${l.action}</span>
+                    <span class="log-time">${l.timestamp.split(' ')[1]}</span>
+                  </div>
+                  <div class="log-actions">
+                    <button type="button" class="edit-log-btn" onclick='openEditLogModal(${Number(l.id)}, ${JSON.stringify(l.timestamp)}, ${JSON.stringify(l.action)})'>
+                      <span class="offline-icon" data-icon="pen" aria-hidden="true"></span> <span data-i18n="edit">Edit</span>
+                    </button>
+                    <button type="button" class="icon-danger-btn" onclick="deleteLogDirect(${Number(l.id)})" title="${t('delete_record')}" aria-label="${t('delete_record')}">
+                      <span class="offline-icon" data-icon="trash" aria-hidden="true"></span>
+                    </button>
+                  </div>
+                </div>`;
+            });
+
+            container.innerHTML += `
+              <div class="daily-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                  <strong style="font-size:13px;"><span class="offline-icon" data-icon="calendar-days" aria-hidden="true"></span> ${day.date}</strong>
+                  <span style="font-size:11px; font-weight:700; color:var(--primary); background:var(--primary-light); padding:3px 8px; border-radius:50px;">Total: ${day.total_time}</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  ${rowsHtml}
+                </div>
+              </div>`;
+          });
+        }
+        const countEl = document.getElementById('report-log-count');
+        const count = (data.days || []).reduce((sum, d) => sum + (d.logs || []).length, 0);
+        if (countEl) { countEl.style.display = 'inline-flex'; countEl.textContent = `${count} event${count === 1 ? '' : 's'}`; }
+        applyTranslations(container);
+        if (window.renderOfflineIcons) window.renderOfflineIcons(container);
+      })
+      .catch(err => {
+        console.error('Report load failed:', err);
+        if (container) container.innerHTML = `<div class="report-error"><strong>Could not load attendance log.</strong><p style="margin-top:6px;">${escapeHtml(err.message || 'Server error')}</p></div>`;
+      });
+  }
+
+  function openEditLogModal(logId, timestamp, action) {
+    editingLogId = Number(logId);
+    const parts = timestamp.split(' ');
+    document.getElementById('edit-log-date').value = parts[0] || '';
+    document.getElementById('edit-log-time').value = (parts[1] || '').slice(0,5);
+    document.getElementById('edit-log-action-display').textContent = action || 'IN';
+    document.getElementById('edit-log-error').innerText = '';
+    document.getElementById('edit-log-reason').value = '';
+    document.getElementById('edit-log-modal').classList.add('open');
+  }
+
+  function closeEditLogModal() {
+    editingLogId = null;
+    document.getElementById('edit-log-modal').classList.remove('open');
+  }
+
+  function saveEditedLog() {
+    const date = document.getElementById('edit-log-date').value;
+    const time = document.getElementById('edit-log-time').value;
+    const errorEl = document.getElementById('edit-log-error');
+    if (!editingLogId || !date || !time) {
+      errorEl.innerText = t('invalid_time');
+      return;
+    }
+
+    fetch(`/api/worker/log/${editingLogId}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({timestamp: `${date} ${time}`, reason: document.getElementById('edit-log-reason').value})
+    })
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') throw new Error(data.message || t('invalid_time'));
+        return data;
+      })
+      .then(() => {
+        closeEditLogModal();
+        loadReportData();
+      })
+      .catch(err => {
+        errorEl.innerText = err.message || t('invalid_time');
+      });
+  }
+
+  function deleteLogDirect(logId) {
+    if (!confirm(t('delete_confirm'))) return;
+    fetch(`/api/worker/log/${Number(logId)}`, {method:'DELETE'})
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') throw new Error(data.message || t('server_error'));
+      })
+      .then(() => loadReportData())
+      .catch(err => alert(err.message || t('server_error')));
+  }
+
+  function deleteEditingLog() {
+    if (!editingLogId) return;
+    if (!confirm(t('delete_confirm'))) return;
+    fetch(`/api/worker/log/${Number(editingLogId)}`, {method:'DELETE'})
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') throw new Error(data.message || t('server_error'));
+      })
+      .then(() => {
+        closeEditLogModal();
+        loadReportData();
+      })
+      .catch(err => {
+        document.getElementById('edit-log-error').innerText = err.message || t('server_error');
+      });
+  }
+
+  document.getElementById('edit-log-modal').addEventListener('click', event => {
+    if (event.target.id === 'edit-log-modal') closeEditLogModal();
+  });
+
+  function openPdfPreview(){
+    const start=document.getElementById('history-start-date').value; const end=document.getElementById('history-end-date').value;
+    const qs=new URLSearchParams(); if(start)qs.set('start_date',start); if(end)qs.set('end_date',end);
+    window.location.href=`/api/worker/pdf-preview/${encodeURIComponent(workerId)}?${qs.toString()}`;
+  }
+
+  function exportReport(format){
+    if (format === 'pdf') return openPdfPreview();
+  }
+  function loadReportMonth(){
+    const month=document.getElementById('report-month').value; if(!month)return;
+    const [y,m]=month.split('-'); const first=`${y}-${m}-01`; const lastDay=new Date(Number(y),Number(m),0).getDate(); const last=`${y}-${m}-${String(lastDay).padStart(2,'0')}`;
+    document.getElementById('history-start-date').value=first; document.getElementById('history-end-date').value=last; loadReportData();
+  }
+  function renderCalendar(month, days, leaveDays){
+    const [y,m]=month.split('-').map(Number); const first=new Date(y,m-1,1); const last=new Date(y,m,0); const startOffset=(first.getDay()+6)%7;
+    const map={}; (days||[]).forEach(d=>map[d.iso_date]=d);
+    let html=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="calendar-weekday">${x}</div>`).join('');
+    for(let i=0;i<startOffset;i++)html+='<div class="calendar-day calendar-empty"></div>';
+    for(let d=1;d<=last.getDate();d++){const iso=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const info=map[iso]||{};const status=info.status||'ABSENT';html+=`<button class="calendar-day day-${status.toLowerCase()}" onclick="selectCalendarDay('${iso}')"><span>${d}</span><small>${info.total_time||''}</small></button>`;}
+    document.getElementById('attendance-calendar').innerHTML=html;
+    if(window.renderOfflineIcons)window.renderOfflineIcons();
+  }
+  function selectCalendarDay(iso){document.getElementById('history-start-date').value=iso;document.getElementById('history-end-date').value=iso;loadReportData();}
+
+  function resetDateFilter() {
+    document.getElementById('history-start-date').value = '';
+    document.getElementById('history-end-date').value = '';
+    loadReportData();
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const now = new Date(); document.getElementById('report-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    loadReportData();
+    if(window.renderOfflineIcons) window.renderOfflineIcons();
+  });
+</script>
+{% endblock %}

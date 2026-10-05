@@ -1,0 +1,50 @@
+<div class="section-card">
+  <h3><span class="offline-icon" data-icon="user-plus" aria-hidden="true"></span> <span data-i18n="add_new_worker">Add New Worker</span></h3>
+  <div class="form-grid">
+    <input type="text" id="add-w-name" data-i18n-placeholder="full_name" placeholder="Full Name">
+    <input type="text" id="add-w-cin" data-i18n-placeholder="cin_number" placeholder="CIN Number">
+    <input type="text" id="add-w-phone" data-i18n-placeholder="phone_number" placeholder="Phone Number">
+  </div>
+  <button class="btn" onclick="submitAddWorker()"><span class="offline-icon" data-icon="plus" aria-hidden="true"></span> <span data-i18n="save_worker">Save Worker</span></button>
+</div>
+
+<div class="section-card">
+  <table id="workers-table">
+    <thead>
+      <tr>
+        <th data-i18n="full_name">Name</th>
+        <th data-i18n="cin_number">CIN</th>
+        <th data-i18n="phone_number">Phone</th>
+        <th data-i18n="card_uid">Card UID</th>
+        <th data-i18n="actions">Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- EDIT WORKER MODAL -->
+<div id="edit-worker-modal" class="modal">
+  <div class="modal-content">
+    <h3><span class="offline-icon" data-icon="user-pen" aria-hidden="true"></span> <span data-i18n="edit_worker">Edit Worker Parameters</span></h3>
+    <input type="hidden" id="edit-w-id">
+    <div style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
+      <div>
+        <label style="font-size:12px; font-weight:700; color:var(--text-muted);">FULL NAME</label>
+        <input type="text" id="edit-w-name">
+      </div>
+      <div>
+        <label style="font-size:12px; font-weight:700; color:var(--text-muted);">CIN NUMBER</label>
+        <input type="text" id="edit-w-cin">
+      </div>
+      <div>
+        <label style="font-size:12px; font-weight:700; color:var(--text-muted);">PHONE NUMBER</label>
+        <input type="text" id="edit-w-phone">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:25px;">
+      <button class="btn" onclick="submitEditWorker()" style="flex:1;"><span class="offline-icon" data-icon="floppy-disk" aria-hidden="true"></span> <span data-i18n="update">Update</span></button>
+      <button class="btn" onclick="closeEditModal()" style="background:var(--border); color:var(--text-main);"><span data-i18n="cancel">Cancel</span></button>
+    </div>
+  </div>
+</div>

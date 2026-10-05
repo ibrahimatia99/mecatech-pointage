@@ -1,0 +1,58 @@
+<div class="section-card">
+  <h3 style="margin-bottom: 20px; font-size: 16px;"><span class="offline-icon" data-icon="palette" aria-hidden="true"></span> <span data-i18n="settings_customization">Settings & Customization</span></h3>
+  
+  <div style="display: flex; flex-direction: column; gap: 18px;">
+    <div>
+      <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">
+        <span class="offline-icon" data-icon="signature" aria-hidden="true"></span> <span data-i18n="app_name">APP NAME</span>
+      </label>
+      <input type="text" name="app_name" value="{{ cfg.app_name }}" placeholder="Mecatech Pointage">
+    </div>
+
+    <div>
+      <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">
+        <span class="offline-icon" data-icon="droplet" aria-hidden="true"></span> <span data-i18n="primary_color">PRIMARY COLOR</span>
+      </label>
+      <div class="color-picker-wrapper">
+        <input type="color" id="primary_color_picker" value="{{ cfg.primary_color }}" aria-label="Primary color">
+        <input type="text" id="primary_color_text" name="primary_color" value="{{ cfg.primary_color }}" placeholder="#d93677" maxlength="7" autocomplete="off">
+      </div>
+    </div>
+
+    <div>
+      <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">
+        <span class="offline-icon" data-icon="image" aria-hidden="true"></span> <span data-i18n="app_logo">APP LOGO</span>
+      </label>
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <div class="preview-box">
+          <img id="logo-preview" src="{{ cfg.app_logo if cfg.app_logo else '' }}" alt="Logo" style="{% if not cfg.app_logo %}display:none;{% endif %}">
+        </div>
+        <input type="file" name="app_logo" accept="image/*" onchange="previewImage(this, 'logo-preview')" style="flex: 1;">
+      </div>
+    </div>
+
+    <div>
+      <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">
+        <span class="offline-icon" data-icon="icons" aria-hidden="true"></span> <span data-i18n="app_icon">APP ICON / FAVICON</span>
+      </label>
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <div class="preview-box">
+          <img id="icon-preview" src="{{ cfg.app_icon if cfg.app_icon else '' }}" alt="Icon" style="{% if not cfg.app_icon %}display:none;{% endif %}">
+        </div>
+        <input type="file" name="app_icon" accept="image/*" onchange="previewImage(this, 'icon-preview')" style="flex: 1;">
+      </div>
+    </div>
+
+    <div>
+      <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">
+        <span class="offline-icon" data-icon="language" aria-hidden="true"></span> <span data-i18n="language">LANGUAGE</span>
+      </label>
+      <select name="language" id="language-select">
+        <option value="en" {% if (cfg.language or 'en') == 'en' %}selected{% endif %}>English</option>
+        <option value="fr" {% if cfg.language == 'fr' %}selected{% endif %}>Français</option>
+        <option value="ar" {% if cfg.language == 'ar' %}selected{% endif %}>العربية</option>
+      </select>
+      <small style="display:block; margin-top:5px; color:var(--text-muted); font-size:11px;" data-i18n="language_help">Choose the interface language.</small>
+    </div>
+  </div>
+</div>
