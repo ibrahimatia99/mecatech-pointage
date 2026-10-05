@@ -56,11 +56,11 @@ class ProductionCoreTests(unittest.TestCase):
             "INSERT INTO logs(worker_id,card_uid,action,timestamp) VALUES(?,?,?,?)",
             ("W1", "ABCDEF", "IN", "2026-10-03 08:05:00"),
         )
-        # Today is a Sunday in the test environment. Add a current-day punch
-        # so the dashboard status logic can be verified independently of weekend rules.
+        # Add a deterministic current-day punch before the late threshold
+        # so the dashboard status is independent of the runner clock.
         conn.execute(
             "INSERT INTO logs(worker_id,card_uid,action,timestamp) VALUES(?,?,?,?)",
-            ("W1", "ABCDEF", "IN", datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+            ("W1", "ABCDEF", "IN", f"{datetime.now().strftime("%Y-%m-%d")} 08:05:00"),
         )
         conn.commit()
         conn.close()
@@ -212,7 +212,9 @@ class AdditionalProductionInvariantTests(unittest.TestCase):
         app = Flask(__name__); app.secret_key = "test"; app.register_blueprint(api_bp, url_prefix="/api")
         r = app.test_client().put(f"/api/worker/log/{log_id}", json={"timestamp":"2026-10-03 16:00", "action":"IN"})
         self.assertEqual(r.status_code, 200)
-        row = self.db.execute("SELECT action,timestamp FROM logs WHERE id=?", (log_id,)).fetchone()
+        conn = self.db.get_db()
+        row = conn.execute("SELECT action,timestamp FROM logs WHERE id=?", (log_id,)).fetchone()
+        conn.close()
         self.assertEqual(row['action'], 'OUT')
         self.assertEqual(row['timestamp'], '2026-10-03 16:00:00')
 
