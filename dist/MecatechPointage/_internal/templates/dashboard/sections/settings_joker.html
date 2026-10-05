@@ -1,0 +1,40 @@
+<div class="section-card">
+  <h3 style="margin-bottom: 8px; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+    <i class="fa-solid fa-mask" style="color: var(--primary);"></i> Joker Cards Management
+  </h3>
+  <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4;">
+    Click <strong>Scan & Add Joker Card</strong> to launch the scanner popup, then tap a spare card on the terminal.
+  </p>
+
+  <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
+    <div>
+      <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+        Card Label / Description
+      </label>
+      <input type="text" id="joker-label-input" placeholder="e.g., Spare Card #1" style="width: 100%;">
+    </div>
+    
+    <button type="button" class="btn" onclick="startJokerCardScan()" style="width: 100%; justify-content: center; padding: 12px 20px; border-radius: 12px;">
+      <i class="fa-solid fa-id-card-clip"></i> Scan & Add Joker Card
+    </button>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table>
+      <thead>
+        <tr style="text-align: left; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+          <th style="padding-bottom: 10px;">UID</th>
+          <th style="padding-bottom: 10px;">Label</th>
+          <th style="padding-bottom: 10px; text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody id="joker-cards-list">
+        <tr>
+          <td colspan="3" style="color: var(--text-muted); text-align: center; padding: 20px 0;">
+            No Joker cards registered.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

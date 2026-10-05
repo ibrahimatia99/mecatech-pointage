@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ cfg.theme }}">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}{{ cfg.app_name }}{% endblock %}</title>
+  {% if cfg.app_icon %}<link rel="icon" type="image/x-icon" href="{{ cfg.app_icon }}">{% endif %}
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg: #f4f5f9; --card-bg: #ffffff; --text-main: #1e1b2e; --text-muted: #8e8ba7;
+      --primary: {{ cfg.primary_color }}; --primary-hover: {{ cfg.primary_color }}dd;
+      --primary-light: {{ cfg.primary_color }}22; --border: #e9e8f4;
+    }
+    [data-theme="dark"] {
+      --bg: #0f0d1a; --card-bg: #181528; --text-main: #f4f5f9; --text-muted: #8e8ba7;
+      --primary: {{ cfg.primary_color }}; --primary-hover: {{ cfg.primary_color }}dd;
+      --primary-light: {{ cfg.primary_color }}33; --border: #28243d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: var(--bg); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  {% block layout %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,50 @@
+<div class="section-card">
+  <h3><i class="fa-solid fa-user-plus"></i> Add New Worker</h3>
+  <div class="form-grid">
+    <input type="text" id="add-w-name" placeholder="Full Name">
+    <input type="text" id="add-w-cin" placeholder="CIN Number">
+    <input type="text" id="add-w-phone" placeholder="Phone Number">
+  </div>
+  <button class="btn" onclick="submitAddWorker()"><i class="fa-solid fa-plus"></i> Save Worker</button>
+</div>
+
+<div class="section-card">
+  <table id="workers-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>CIN</th>
+        <th>Phone</th>
+        <th>Card UID</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- EDIT WORKER MODAL -->
+<div id="edit-worker-modal" class="modal">
+  <div class="modal-content">
+    <h3><i class="fa-solid fa-user-pen"></i> Edit Worker Parameters</h3>
+    <input type="hidden" id="edit-w-id">
+    <div style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
+      <div>
+        <label style="font-size:12px; font-weight:700; color:var(--text-muted);">FULL NAME</label>
+        <input type="text" id="edit-w-name">
+      </div>
+      <div>
+        <label style="font-size:12px; font-weight:700; color:var(--text-muted);">CIN NUMBER</label>
+        <input type="text" id="edit-w-cin">
+      </div>
+      <div>
+        <label style="font-size:12px; font-weight:700; color:var(--text-muted);">PHONE NUMBER</label>
+        <input type="text" id="edit-w-phone">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:25px;">
+      <button class="btn" onclick="submitEditWorker()" style="flex:1;"><i class="fa-solid fa-floppy-disk"></i> Update</button>
+      <button class="btn" onclick="closeEditModal()" style="background:var(--border); color:var(--text-main);">Cancel</button>
+    </div>
+  </div>
+</div>
